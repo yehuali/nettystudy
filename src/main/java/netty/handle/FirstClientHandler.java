@@ -3,13 +3,17 @@ package netty.handle;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
+import netty.encodeAnddecode.PacketCodeC;
 import netty.entity.LoginRequestPacket;
+import netty.entity.LoginResponsePacket;
+import netty.util.LoginUtil;
 
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.UUID;
 
-public class FirstClientHandler extends ChannelInboundHandlerAdapter {
+public class FirstClientHandler extends SimpleChannelInboundHandler<LoginResponsePacket> {
 
     //户端连接建立成功之后被调用
     @Override
@@ -23,17 +27,22 @@ public class FirstClientHandler extends ChannelInboundHandlerAdapter {
         loginRequestPacket.setPassword("pwd");
 
         // 编码
-        ByteBuf buffer = PacketCodeC.INSTANCE.encode(ctx.alloc(), loginRequestPacket);
+//        ByteBuf buffer = PacketCodeC.INSTANCE.encode(ctx.alloc(), loginRequestPacket);
 
         // 2. 写数据
-        ctx.channel().writeAndFlush(buffer);
+        ctx.channel().writeAndFlush(loginRequestPacket);
     }
 
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        ByteBuf byteBuf = (ByteBuf) msg;
 
-        System.out.println(new Date() + ": 客户端读到数据 -> " + byteBuf.toString(Charset.forName("utf-8")));
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, LoginResponsePacket loginResponsePacket) throws Exception {
+        if (loginResponsePacket.isSuccess()) {
+            System.out.println(new Date() + ": 客户端登录成功");
+            LoginUtil.markAsLogin(ctx.channel());
+        } else {
+            System.out.println(new Date() + ": 客户端登录失败，原因：" + loginResponsePacket.getReason());
+        }
     }
 
     private ByteBuf getByteBuf(ChannelHandlerContext ctx) {

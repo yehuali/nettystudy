@@ -18,9 +18,6 @@ public class LoginRequestPacket extends Packet {
         return LOGIN_REQUEST;
     }
 
-    public int getVersion() {
-        return 0;
-    }
 
 
 }
